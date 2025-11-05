@@ -20,3 +20,28 @@ jobs:
           context: .
           push: false
           tags: juice-shop-image:latest
+
+  sast-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep SAST Scan
+        uses: semgrep/semgrep-action@v2
+
+  sca-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency-Check
+        uses: dependency-check/dependency-check-action@v7
+        with:
+          project: 'juice-shop'
+          scan: './'
+          format: 'HTML'
+          out: 'reports'
+          args: '--disableYarnAudit'
+          
