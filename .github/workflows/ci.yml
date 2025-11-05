@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build: # This job is MODIFIED
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -14,36 +14,56 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build the Docker image
+      - name: Build and export to Docker # This step is MODIFIED
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
           tags: juice-shop-image:latest
+          outputs: type=docker,dest=/tmp/juice-shop-image.tar # This line is NEW
 
-  sast-scan:
+      - name: Upload artifact # This step is NEW
+        uses: actions/upload-artifact@v4
+        with:
+          name: juice-shop-image
+          path: /tmp/juice-shop-image.tar
+
+  sast-scan: # Unchanged from previous step
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run Semgrep SAST Scan
-        # MODIFIED: This is the new, recommended action for Semgrep
         uses: returntocorp/semgrep-action@v1 
 
-  sca-scan:
+  sca-scan: # Unchanged from previous step
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run OWASP Dependency-Check
-        # MODIFIED: This is the correct action name and version
         uses: dependency-check/Dependency-Check_Action@main
         with:
           project: 'juice-shop'
-          # MODIFIED: The 'scan' parameter is called 'path' in this action
           path: '.' 
           format: 'HTML'
           out: 'reports'
           args: '--disableYarnAudit'
+
+  container-scan: # This job is NEW
+    runs-on: ubuntu-latest
+    needs: build # This line is CRITICAL
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: juice-shop-image
+          path: /tmp
+
+      - name: Scan container image with Trivy
+        uses: crazy-max/ghaction-container-scan@v3
+        with:
+          tarball: /tmp/juice-shop-image.tar
+          # We will add the severity threshold in the next lab
