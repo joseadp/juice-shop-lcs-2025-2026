@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build: # This job is MODIFIED
+  build: # Unchanged from previous step
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -14,30 +14,41 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and export to Docker # This step is MODIFIED
+      - name: Build and export to Docker
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
           tags: juice-shop-image:latest
-          outputs: type=docker,dest=/tmp/juice-shop-image.tar # This line is NEW
+          outputs: type=docker,dest=/tmp/juice-shop-image.tar
 
-      - name: Upload artifact # This step is NEW
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: juice-shop-image
           path: /tmp/juice-shop-image.tar
 
-  sast-scan: # Unchanged from previous step
+  sast-scan: # This job is MODIFIED
     runs-on: ubuntu-latest
+    permissions: # NEW permissions
+      security-events: write
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run Semgrep SAST Scan
-        uses: returntocorp/semgrep-action@v1 
+        uses: returntocorp/semgrep-action@v1
+        with: # NEW 'with' block
+          format: "sarif"
+          output: "semgrep.sarif"
 
-  sca-scan: # Unchanged from previous step
+      - name: Upload SARIF to Security Tab # NEW step
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "semgrep.sarif"
+
+  sca-scan: # This job is MODIFIED
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -52,9 +63,15 @@ jobs:
           out: 'reports'
           args: '--disableYarnAudit'
 
-  container-scan: # This job is NEW
+      - name: Upload SCA Report # NEW step
+        uses: actions/upload-artifact@v4
+        with:
+          name: sca-report
+          path: reports/dependency-check-report.html
+
+  container-scan: # This job is MODIFIED
     runs-on: ubuntu-latest
-    needs: build # This line is CRITICAL
+    needs: build
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -66,4 +83,4 @@ jobs:
         uses: crazy-max/ghaction-container-scan@v3
         with:
           tarball: /tmp/juice-shop-image.tar
-          # We will add the severity threshold in the next lab
+          severity_threshold: 'CRITICAL' # This is the NEW gate!
