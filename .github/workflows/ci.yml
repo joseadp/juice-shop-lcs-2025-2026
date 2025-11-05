@@ -20,3 +20,4 @@ jobs:
           context:.
           push: false
           tags: juice-shop-image:latest
+          
