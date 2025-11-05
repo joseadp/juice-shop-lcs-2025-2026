@@ -28,7 +28,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Semgrep SAST Scan
-        uses: semgrep/semgrep-action@v2
+        # MODIFIED: This is the new, recommended action for Semgrep
+        uses: returntocorp/semgrep-action@v1 
 
   sca-scan:
     runs-on: ubuntu-latest
@@ -37,10 +38,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run OWASP Dependency-Check
-        uses: dependency-check/dependency-check-action@v7
+        # MODIFIED: This is the correct action name and version
+        uses: dependency-check/Dependency-Check_Action@main
         with:
           project: 'juice-shop'
-          scan: './'
+          # MODIFIED: The 'scan' parameter is called 'path' in this action
+          path: '.' 
           format: 'HTML'
           out: 'reports'
           args: '--disableYarnAudit'
