@@ -44,4 +44,3 @@ jobs:
           format: 'HTML'
           out: 'reports'
           args: '--disableYarnAudit'
-          
