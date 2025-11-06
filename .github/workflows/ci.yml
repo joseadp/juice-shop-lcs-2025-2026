@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build: # Unchanged from previous step
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -28,27 +28,29 @@ jobs:
           name: juice-shop-image
           path: /tmp/juice-shop-image.tar
 
-  sast-scan:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  sast-scan: # This job is MODIFIED
+      runs-on: ubuntu-latest
+      permissions:
+        security-events: write
+        contents: read
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
 
-      - name: Run Semgrep SAST Scan
-        uses: semgrep/semgrep-action@v2 
-        with:
-          format: "sarif"
-          output: "semgrep.sarif"
+        - name: Run Semgrep SAST Scan
+          # MODIFIED: This uses the correct action from the lab doc [cite: 178]
+          uses: semgrep/semgrep-action@v2 
+          with:
+            format: "sarif"
+            output: "semgrep.sarif"
 
-      - name: Upload SARIF to Security Tab
-        uses: github/codeql-action/upload-sarif@v3 
-        with:
-          sarif_file: "semgrep.sarif"
+        - name: Upload SARIF to Security Tab
+          # MODIFIED: This is updated to v3 as required by the error log
+          uses: github/codeql-action/upload-sarif@v3 
+          with:
+            sarif_file: "semgrep.sarif"
 
-  sca-scan:
+  sca-scan: # This job is MODIFIED
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -63,13 +65,13 @@ jobs:
           out: 'reports'
           args: '--disableYarnAudit'
 
-      - name: Upload SCA Report
+      - name: Upload SCA Report # NEW step
         uses: actions/upload-artifact@v4
         with:
           name: sca-report
           path: reports/dependency-check-report.html
 
-  container-scan:
+  container-scan: # This job is MODIFIED
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -83,4 +85,4 @@ jobs:
         uses: crazy-max/ghaction-container-scan@v3
         with:
           tarball: /tmp/juice-shop-image.tar
-          severity_threshold: 'CRITICAL'
+          severity_threshold: 'CRITICAL' # This is the NEW gate!
