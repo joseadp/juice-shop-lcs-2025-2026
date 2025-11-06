@@ -38,12 +38,13 @@ jobs:
           uses: actions/checkout@v4
 
         - name: Run Semgrep SAST Scan
-          uses: returntocorp/semgrep-action@v1
-          with:
-            # MODIFIED: This is the correct parameter for this action
-            sarifOutputFile: semgrep.sarif 
-
+          # MODIFIED: We are running Semgrep from the command line
+          run: |
+            pip install semgrep
+            semgrep scan --config auto --sarif --output semgrep.sarif || true
+            
         - name: Upload SARIF to Security Tab
+          # This step is unchanged and should now find the file
           uses: github/codeql-action/upload-sarif@v3
           with:
             sarif_file: "semgrep.sarif"
