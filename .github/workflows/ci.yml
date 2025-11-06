@@ -29,26 +29,24 @@ jobs:
           path: /tmp/juice-shop-image.tar
 
   sast-scan: # This job is MODIFIED
-      runs-on: ubuntu-latest
-      permissions:
-        security-events: write
-        contents: read
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v4
+    runs-on: ubuntu-latest
+    permissions: # NEW permissions
+      security-events: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-        - name: Run Semgrep SAST Scan
-          # MODIFIED: This uses the correct action from the lab doc [cite: 178]
-          uses: semgrep/semgrep-action@v2 
-          with:
-            format: "sarif"
-            output: "semgrep.sarif"
+      - name: Run Semgrep SAST Scan
+        uses: returntocorp/semgrep-action@v1
+        with: # NEW 'with' block
+          format: "sarif"
+          output: "semgrep.sarif"
 
-        - name: Upload SARIF to Security Tab
-          # MODIFIED: This is updated to v3 as required by the error log
-          uses: github/codeql-action/upload-sarif@v3 
-          with:
-            sarif_file: "semgrep.sarif"
+      - name: Upload SARIF to Security Tab # NEW step
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "semgrep.sarif"
 
   sca-scan: # This job is MODIFIED
     runs-on: ubuntu-latest
