@@ -31,20 +31,19 @@ jobs:
   sast-scan: # This job is MODIFIED
       runs-on: ubuntu-latest
       permissions:
-        security-events: write
-        contents: read
+        security-events: write # To write to the Security tab
+        contents: read         # To read the code
+        actions: read          # To read workflow run metadata (This is the NEW line)
       steps:
         - name: Checkout repository
           uses: actions/checkout@v4
 
         - name: Run Semgrep SAST Scan
-          # MODIFIED: We are running Semgrep from the command line
           run: |
             pip install semgrep
             semgrep scan --config auto --sarif --output semgrep.sarif || true
             
         - name: Upload SARIF to Security Tab
-          # This step is unchanged and should now find the file
           uses: github/codeql-action/upload-sarif@v3
           with:
             sarif_file: "semgrep.sarif"
