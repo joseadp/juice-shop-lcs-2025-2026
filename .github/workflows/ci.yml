@@ -89,7 +89,7 @@ jobs:
 
       - name: Run NodeJsScan
         run: |
-          nodejsscan --path . --format json --output nodejsscan-report.json || true
+          nodejsscan -d . --output nodejsscan-report.json || true
 
       - name: Show current directory and files (debug)
         run: |
