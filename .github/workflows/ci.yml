@@ -91,6 +91,21 @@ jobs:
         run: |
           nodejsscan --path . --format json --output nodejsscan-report.json || true
 
+      - name: Show current directory and files (debug)
+        run: |
+          echo "PWD: $(pwd)"
+          echo "Listing repo root:"
+          ls -la
+      
+      - name: If nodejsscan.Report exists show it
+        run: |
+          if [ -f nodejsscan-report.json ]; then
+            echo "nodejsscan-report.json found, head:"
+            head -n 200 nodejsscan-report.json
+          else
+            echo "nodejsscan-report.json NOT found"
+          fi
+
       - name: Convert NodeJsScan JSON to SARIF
         run: |
           python - <<'PY'
