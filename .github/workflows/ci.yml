@@ -72,11 +72,12 @@ jobs:
   nodejsscan:
     name: NodeJsScan (Node/Express SAST)
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python (NodeJsScan uses pip installer)
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
@@ -88,15 +89,39 @@ jobs:
 
       - name: Run NodeJsScan
         run: |
-          # scan the repository and generate JSON report
           nodejsscan --path . --format json --output nodejsscan-report.json || true
 
-      - name: Upload NodeJsScan report
-        uses: actions/upload-artifact@v4
-        with:
-          name: nodejsscan-report
-          path: nodejsscan-report.json
+      - name: Convert NodeJsScan JSON to SARIF
+        run: |
+          python - <<'PY'
+          import json, sys
+          nodejs_data = json.load(open('nodejsscan-report.json'))
+          sarif_output = {
+              "version": "2.1.0",
+              "runs": [{
+                  "tool": {"driver": {"name": "NodeJsScan"}},
+                  "results": []
+              }]
+          }
+          for issue in nodejs_data.get("results", []):
+              sarif_output["runs"][0]["results"].append({
+                  "ruleId": issue.get("title", "Unknown Rule"),
+                  "message": {"text": issue.get("description", "")},
+                  "level": issue.get("severity", "note").lower(),
+                  "locations": [{
+                      "physicalLocation": {
+                          "artifactLocation": {"uri": issue.get("file_path", "")},
+                          "region": {"startLine": issue.get("line", 1)}
+                      }
+                  }]
+              })
+          json.dump(sarif_output, open("nodejsscan.sarif", "w"), indent=2)
+          PY
 
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: nodejsscan.sarif
 
   container-scan: # Unchanged
     runs-on: ubuntu-latest
