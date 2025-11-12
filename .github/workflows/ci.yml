@@ -28,7 +28,7 @@ jobs:
           name: juice-shop-image
           path: /tmp/juice-shop-image.tar
 
-  sast-scan: # This job is MODIFIED
+  sast-scan: # This job is MODIFIED by David
       runs-on: ubuntu-latest
       permissions:
         security-events: write # To write to the Security tab
